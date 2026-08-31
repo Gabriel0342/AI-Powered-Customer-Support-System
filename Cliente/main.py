@@ -31,9 +31,9 @@ def login():
         print("Password ou nome incorreto!")
 
 def novo_ticket():
-    titulo = input("Título do ticket: ")
-    descricao = input("Descrição do problema: ")
-    email = input("Email: ")
+    titulo = input(str("Título do ticket: "))
+    descricao = input(str("Descrição do problema: "))
+    email = input(str("Email: "))
 
     criar_ticket(
         db,

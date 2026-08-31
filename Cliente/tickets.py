@@ -33,7 +33,7 @@ def listar_tickets(db, filtro=None):
         print("Email:", ticket["email"])
         print("Status:", ticket["status"])
         print("Criado em:", ticket["criado_em"])
-        print("-" * 30)
+        print("=" * 30)
 
 
 def visualizar_ticket(db, ticket_id):
