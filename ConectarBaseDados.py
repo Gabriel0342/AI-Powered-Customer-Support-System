@@ -1,12 +1,12 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from pymongo import MongoClient
 
-load_dotenv()
+current_dir = Path(__file__).parent
+load_dotenv(current_dir / 'atlas-credentials.env')
 
 def get_database(): # Ligação à API do Mongo
     CONNECTION_STRING = os.getenv("MONGODB_URI")
     client = MongoClient(CONNECTION_STRING)
-    print("Conectado")
-    return client
-
+    return client['support_system']
