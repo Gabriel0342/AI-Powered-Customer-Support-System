@@ -3,6 +3,8 @@
 
 import ConectarBaseDados
 import bcrypt
+from Cliente.tickets import criar_ticket, listar_tickets, visualizar_ticket
+from Cliente.menu import menu
 
 db = ConectarBaseDados.get_database()
 collection = db['clients']
@@ -28,3 +30,24 @@ def login():
     else:
         print("Password ou nome incorreto!")
 
+def novo_ticket():
+    titulo = input("Título do ticket: ")
+    descricao = input("Descrição do problema: ")
+    email = input("Email: ")
+
+    criar_ticket(
+        db,
+        titulo,
+        descricao,
+        email
+    )
+
+if __name__ == "__main__":
+    menu(
+        criarPerfil,
+        login,
+        novo_ticket,
+        listar_tickets,
+        visualizar_ticket,
+        db
+    )
