@@ -9,17 +9,17 @@ def menu_listar_tickets(listar_tickets, db):
         print("4 - Filtrar por cliente")
         print("0 - Voltar")
 
-        opcao = input(int("Escolha uma opção: "))
+        opcao = input("Escolha uma opção: ")
 
         if opcao == "1":
             listar_tickets(db)
 
         elif opcao == "2":
-            status = input(str("Status: "))
+            status = input("Status: ")
             listar_tickets(db, {"status": status})
 
         elif opcao == "3":
-            data = input(str("Data (DD/MM/AAAA): "))
+            data = input("Data (DD/MM/AAAA): ")
             data_inicio = datetime.strptime(data, "%d/%m/%Y")
             data_fim = data_inicio + timedelta(days=1)
 
@@ -31,7 +31,7 @@ def menu_listar_tickets(listar_tickets, db):
             })
 
         elif opcao == "4":
-            email = input(str("Email do cliente: "))
+            email = input("Email do cliente: ")
             listar_tickets(db, {"email": email})
 
         elif opcao == "0":
@@ -51,7 +51,7 @@ def menu(criarPerfil, login, novo_ticket, listar_tickets, visualizar_ticket, db)
         print("0 - Sair")
         print("==================================")
 
-        opcao = input(int("Escolha uma opção: "))
+        opcao = input("Escolha uma opção: ")
 
         if opcao == "1":
             criarPerfil()
@@ -66,7 +66,7 @@ def menu(criarPerfil, login, novo_ticket, listar_tickets, visualizar_ticket, db)
             menu_listar_tickets(listar_tickets, db)
 
         elif opcao == "5":
-            ticket_id = input(str("ID do ticket: "))
+            ticket_id = input("ID do ticket: ")
             visualizar_ticket(db, ticket_id)
 
         elif opcao == "0":
