@@ -51,27 +51,13 @@ def menu(criarPerfil, login, novo_ticket, listar_tickets, visualizar_ticket, db)
         print("0 - Sair")
         print("==================================")
 
-        opcao = input("Escolha uma opção: ")
+        opcao = int(input("Escolha uma opção: "))
 
-        if opcao == "1":
-            criarPerfil()
-
-        elif opcao == "2":
-            login()
-
-        elif opcao == "3":
-            novo_ticket()
-
-        elif opcao == "4":
-            menu_listar_tickets(listar_tickets, db)
-
-        elif opcao == "5":
-            ticket_id = input("ID do ticket: ")
-            visualizar_ticket(db, ticket_id)
-
-        elif opcao == "0":
-            print("Programa terminado.")
-            break
-
-        else:
-            print("Opção inválida! Tente novamente.")
+        match opcao:
+            case 1: criarPerfil()
+            case 2: login()
+            case 3: novo_ticket()
+            case 4: menu_listar_tickets(listar_tickets, db)
+            case 5: visualizar_ticket(db, novo_ticket)
+            case 0: break
+            case _ if opcao >= 6 : print("Opção inexistente!")

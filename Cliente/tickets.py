@@ -1,8 +1,10 @@
+# Estrutura dedicada para todas as funções sobre os tickets
+
 from datetime import datetime
 from bson.objectid import ObjectId, InvalidId
 
 
-def criar_ticket(db, titulo, descricao, email):
+def criarTicket(db, titulo, descricao, email):
     collection = db["tickets"]
 
     ticket = {
@@ -15,17 +17,21 @@ def criar_ticket(db, titulo, descricao, email):
 
     result = collection.insert_one(ticket)
 
-    print("Ticket criado com sucesso!")
+    if(result):
+        print("Ticket criado com sucesso!")
+    else:
+        print("Ticket sem sucesso!")
 
 
-def listar_tickets(db, filtro=None):
+
+def listarTickets(db, filtro=None):
     collection = db["tickets"]
 
     if filtro is None:
         filtro = {}
 
     tickets = collection.find(filtro)
-
+    print(30*"=")
     for ticket in tickets:
         print("ID:", ticket["_id"])
         print("Título:", ticket["titulo"])
@@ -33,9 +39,10 @@ def listar_tickets(db, filtro=None):
         print("Email:", ticket["email"])
         print("Status:", ticket["status"])
         print("Criado em:", ticket["criado_em"])
+    print(30*"=")
+    print("\n")
 
-
-def visualizar_ticket(db, ticket_id):
+def visualizarTicket(db, ticket_id):
     collection = db["tickets"]
 
     try:
@@ -44,9 +51,7 @@ def visualizar_ticket(db, ticket_id):
         print("ID inválido!")
         return
 
-    ticket = collection.find_one({
-        "_id": id
-    })
+    ticket = collection.find_one({"_id": id})
 
     if ticket:
         print("\n===== DETALHES DO TICKET =====")
@@ -56,6 +61,6 @@ def visualizar_ticket(db, ticket_id):
         print("Email:", ticket["email"])
         print("Status:", ticket["status"])
         print("Criado em:", ticket["criado_em"])
-        print("==============================")
+        print(30*"=")
     else:
         print("Ticket não encontrado.")

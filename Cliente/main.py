@@ -1,9 +1,8 @@
-# Estrutura principal para as funcionalidade dos Clientes onde iram expor os seus problemas e visualizar o progresso dos tickets
-# caso o ChatAI não consiga resolver
+# Estrutura principal para as funcionalidade dos Clientes
 
 import ConectarBaseDados
 import bcrypt
-from Cliente.tickets import criar_ticket, listar_tickets, visualizar_ticket
+from Cliente.tickets import criarTicket, listarTickets, visualizarTicket
 from Cliente.menu import menu
 
 db = ConectarBaseDados.get_database()
@@ -18,7 +17,10 @@ def criarPerfil():
 
     dados = {'nome': nome, 'password': password_hash}
     res = collection.insert_one(dados) #Adiconar dados
-    print("Perfil criado com sucesso!")
+    if(res):
+        print("Perfil criado com sucesso!")
+    else:
+        print("Erro ao criar perfil!")
 
 def login():
     nome = input(str("Qual o seu nome: "))
@@ -30,24 +32,19 @@ def login():
     else:
         print("Password ou nome incorreto!")
 
-def novo_ticket():
+def novoTicket():
     titulo = input(str("Título do ticket: "))
     descricao = input(str("Descrição do problema: "))
     email = input(str("Email: "))
 
-    criar_ticket(
-        db,
-        titulo,
-        descricao,
-        email
-    )
+    criarTicket(db, titulo, descricao, email)
 
 if __name__ == "__main__":
     menu(
         criarPerfil,
         login,
-        novo_ticket,
-        listar_tickets,
-        visualizar_ticket,
+        novoTicket,
+        listarTickets,
+        visualizarTicket,
         db
     )

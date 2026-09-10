@@ -11,7 +11,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from SuportTeam.knowledge_base import KnowledgeBase, KnowledgeBaseError, MIN_SCORE
-from SuportTeam.ollama_chat import responder, responder_conversa
+from ollama_chat import responder, responderConversa
 
 
 def main():
@@ -32,7 +32,7 @@ def main():
             print("Chat terminado.")
             return 0
         try:
-            resposta = responder_conversa(mensagem)
+            resposta = responderConversa(mensagem)
             if resposta is None:
                 results = kb.search(mensagem)
                 resposta = responder(mensagem, knowledge_base=kb, results=results)

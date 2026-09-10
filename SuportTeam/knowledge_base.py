@@ -12,25 +12,24 @@ import unicodedata
 import ollama
 
 KB_PATH = Path(__file__).resolve().parents[1] / "Knowledge Base"
-EMBEDDING_MODEL = "embeddinggemma"
-# Calibrado com frases completas e variantes curtas.
-MIN_SCORE = 0.47
-TOP_K = 2
-CHUNK_SIZE = 1200  # Caracteres; os procedimentos atuais cabem num único trecho.
-CHUNK_OVERLAP = 150
+EMBEDDING_MODEL = "embeddinggemma" ## Usamos este modelo pois é o unico no ollma capaz de converter texto em vetores numericos
+MIN_SCORE = 0.47 ##Quanto maior melhor a precisão (realizar teste até acertar no ponto)
+TOP_K = 2 ## Ideal para um sistema de Chatbot pois envia um resultado principal e outro alternativo
+CHUNK_SIZE = 1200  # Divisão em trechos de 1200 caracters para uma melhor analise (quanto maior o numero mais preciso é mas, mais tokens consome).
+CHUNK_OVERLAP = 150 ## Sobreposição de Chunks para não termos frases cortadas a meio e assim perder o seu sentido
 SEARCH_TOPICS_PATH = Path(__file__).with_name("search_topics.json")
 
-# Índices não contêm procedimentos; automação descreve ações internas que este
-# chat não executa; Welcome é um exemplo do Obsidian. Não alterar os originais.
-EXCLUDED_FILES = {"Welcome.md", "Base de Conhecimento.md", "Automação dos Tickets.md"}
+
+EXCLUDED_FILES = {"Welcome.md", "Base de Conhecimento.md", "Automação dos Tickets.md"} # Remove estes ficheiros da primeira leitura para que não haja
+# erros na qualidade dos dados.
 
 
-class KnowledgeBaseError(RuntimeError):
-    """A base não pôde ser lida ou os embeddings não são válidos."""
+class KnowledgeBaseError(RuntimeError): # Classe que irá particularizar um erro de forma a facilitar o debugging
+    """Erro de ligação à Knowledge base ou, os embadings são inválidos!"""
 
 
 @dataclass(frozen=True)
-class Chunk:
+class Chunk: ## Prepara o Chunk para receber as informações relativas às KB
     source: str
     title: str
     text: str
@@ -38,21 +37,18 @@ class Chunk:
 
 
 @dataclass(frozen=True)
-class SearchResult:
+class SearchResult: # Guarda os resultados das pesquisas para cada Chunks, neste caso o score
     chunk: Chunk
     score: float
 
 
-def clean_markdown(text):
-    """Normaliza uma cópia; nunca escreve nos documentos originais."""
+def limparMarkdown(text): # Esta função irá remover caracteres/formatações desnecessárias
     text = re.sub(r"\[\[([^\]]+)\]\]", lambda m: m[1].split("|")[-1].replace("#", " — "), text)
-    # Mantém o significado das hashtags; preserva títulos Markdown (# Título).
     text = re.sub(r"(?<!\w)#([^\s#]+)", r"\1", text)
     return text.strip()
 
-
-def split_chunks(text, size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
-    """Divide em limites de linhas/palavras, com sobreposição entre trechos."""
+def separarChunks(text, size=CHUNK_SIZE, overlap=CHUNK_OVERLAP): #Vai dividir os textos em chunks para uma melhor
+# analise por parte do modelo ollama permitindo assim ler longos documentos sem exceder o limite de tokens.
     if not 0 <= overlap < size:
         raise ValueError("A sobreposição deve estar entre zero e o tamanho do chunk.")
     start = 0
@@ -72,7 +68,7 @@ def split_chunks(text, size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
         start = max(start + 1, end - overlap)
 
 
-def normalize(vector):
+def normalizar(vector):
     if not vector or not all(isfinite(value) for value in vector):
         raise KnowledgeBaseError("O Ollama devolveu um embedding vazio ou inválido.")
     length = sqrt(sum(value * value for value in vector))
@@ -98,7 +94,7 @@ class KnowledgeBase:
         self.vectors = []
         self._fingerprint = None
 
-    def _read_documents(self):
+    def readDocuments(self):
         if not self.path.is_dir():
             raise KnowledgeBaseError(f"Pasta da Knowledge Base não encontrada: {self.path}")
         documents = []
@@ -115,15 +111,14 @@ class KnowledgeBase:
             raise KnowledgeBaseError(f"Não foi possível ler a Knowledge Base: {error}") from error
         return documents
 
-    def _embed(self, texts):
-        vectors = self.client.embed(model=EMBEDDING_MODEL, input=texts, truncate=False)["embeddings"]
-        if len(vectors) != len(texts):
+    def embed(self, texts):
+        vectors = self.client.embed(model=EMBEDDING_MODEL, input=texts, truncate=False)["embeddings"] # Ollama vai gerar os embaddings para cada texto
+        if len(vectors) != len(texts): # Garante que o ollama devolveu um embedding para cada texto
             raise KnowledgeBaseError("O número de embeddings devolvido pelo Ollama é incorreto.")
-        return [normalize(vector) for vector in vectors]
+        return [normalizar(vector) for vector in vectors]
 
-    def refresh(self):
-        """Reconstrói só quando há documentos novos, alterados ou apagados."""
-        documents = self._read_documents()
+    def refresh(self): #Realizar nova leitura quando existem novos documentos
+        documents = self.readDocuments()
         topics = {}
         if self.topics_path is not None:
             try:
@@ -140,7 +135,7 @@ class KnowledgeBase:
             return
         chunks = [Chunk(source, title, part, number)
                   for source, title, text in documents
-                  for number, part in enumerate(split_chunks(clean_markdown(text)), start=1)]
+                  for number, part in enumerate(separarChunks(limparMarkdown(text)), start=1)]
         vectors = []
         counts = Counter(chunk.source for chunk in chunks)
         for start in range(0, len(chunks), 16):
@@ -148,7 +143,7 @@ class KnowledgeBase:
             # em passos repetidos (por exemplo, 'criar um ticket' em quase toda a KB).
             # Documentos novos usam o texto original; documentos longos incluem
             # também o trecho para distinguir as suas diferentes secções.
-            vectors.extend(self._embed([
+            vectors.extend(self.embed([
                 f"title: {chunk.title} | text: " + (
                     topics[chunk.source] + ("\n\n" + chunk.text if counts[chunk.source] > 1 else "")
                     if chunk.source in topics else chunk.text
@@ -161,7 +156,7 @@ class KnowledgeBase:
         self.chunks, self.vectors = chunks, vectors
         self._fingerprint = fingerprint
 
-    def search(self, question):
+    def search(self, question): #retorna as informações que mais se enquadram com a pergunta
         if not question.strip():
             return []
         self.refresh()
@@ -169,15 +164,13 @@ class KnowledgeBase:
             return []
         question = unicodedata.normalize("NFC", question.strip())
         question = re.sub(r"\bpalavra\s+passe\b", "palavra-passe", question, flags=re.I)
-        query = self._embed([f"task: search result | query: {question}"])[0]
-        if len(query) != len(self.vectors[0]):
+        query = self.embed([f"task: search result | query: {question}"])[0]
+        if len(query) != len(self.vectors[0]): # verifica se o query tem o mesmo tamanho que os vetores da KB
             self._fingerprint = None
             raise KnowledgeBaseError("A dimensão do modelo mudou; volte a tentar para reindexar.")
-        # Produto escalar de vetores normalizados = similaridade de cosseno.
-        ranked = sorted([
+        ranked = sorted([ # vai classificar o score de compatibilidade da pergunta com as respostas propostas por ordem decrescente
             SearchResult(chunk, sum(a * b for a, b in zip(query, vector)))
             for chunk, vector in zip(self.chunks, self.vectors)
         ], key=lambda result: result.score, reverse=True)
-        # A margem evita misturar procedimentos muito menos relevantes.
         cutoff = max(self.min_score, ranked[0].score - 0.06)
         return [result for result in ranked if result.score >= cutoff][:self.top_k]
