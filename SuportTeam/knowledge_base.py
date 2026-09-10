@@ -17,7 +17,7 @@ MIN_SCORE = 0.47 ##Quanto maior melhor a precisão (realizar teste até acertar 
 TOP_K = 2 ## Ideal para um sistema de Chatbot pois envia um resultado principal e outro alternativo
 CHUNK_SIZE = 1200  # Divisão em trechos de 1200 caracters para uma melhor analise (quanto maior o numero mais preciso é mas, mais tokens consome).
 CHUNK_OVERLAP = 150 ## Sobreposição de Chunks para não termos frases cortadas a meio e assim perder o seu sentido
-SEARCH_TOPICS_PATH = Path(__file__).with_name("search_topics.json")
+SEARCH_TOPICS_PATH = Path(__file__).resolve().parents[1] / "search_topics.json"
 
 
 EXCLUDED_FILES = {"Welcome.md", "Base de Conhecimento.md", "Automação dos Tickets.md"} # Remove estes ficheiros da primeira leitura para que não haja
